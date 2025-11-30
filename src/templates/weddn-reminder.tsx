@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Send,
   CheckCircle,
@@ -153,6 +153,9 @@ export default function WhatsAppSender() {
       failed: [],
     };
 
+    const BATCH_SIZE = 20;
+    const BATCH_DELAY = 20000; // 20 seconds
+
     for (let i = 0; i < phoneList.length; i++) {
       const phone = phoneList[i];
       setSendingProgress({ current: i + 1, total: phoneList.length });
@@ -161,9 +164,20 @@ export default function WhatsAppSender() {
         await sendWhatsAppMessage(phone);
         results.success.push(phone);
 
-        // Add a small delay between messages to avoid rate limits
+        // Add delay between messages within a batch
         if (i < phoneList.length - 1) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+
+        // Add 20s delay after every 20 messages
+        if ((i + 1) % BATCH_SIZE === 0 && i < phoneList.length - 1) {
+          setStatus({
+            type: "success",
+            message: `Sent ${
+              i + 1
+            } messages. Waiting 20 seconds before next batch...`,
+          });
+          await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY));
         }
       } catch (error) {
         results.failed.push({
@@ -198,7 +212,7 @@ export default function WhatsAppSender() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 p-4">
+    <div className="min-h-screen bg-linear-to-br from-pink-50 via-white to-purple-50 p-4">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl p-8 mt-8">
           <div className="flex items-center gap-3 mb-6">
@@ -386,9 +400,9 @@ export default function WhatsAppSender() {
               }`}
             >
               {status.type === "success" ? (
-                <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                <CheckCircle className="w-5 h-5 shrink-0" />
               ) : (
-                <XCircle className="w-5 h-5 flex-shrink-0" />
+                <XCircle className="w-5 h-5 shrink-0" />
               )}
               <span className="text-sm">{status.message}</span>
             </div>
