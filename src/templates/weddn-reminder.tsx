@@ -32,6 +32,10 @@ export default function WhatsAppSender() {
     current: 0,
     total: 0,
   });
+  const [sendResults, setSendResults] = useState<{
+    success: string[];
+    failed: { phone: string; error: any }[];
+  } | null>(null);
 
   const CREDENTIALS = {
     WABA_ID: "1334188511363110",
@@ -223,6 +227,7 @@ export default function WhatsAppSender() {
     }
 
     setLoading(false);
+    setSendResults(results);
 
     if (results.failed.length === 0) {
       setStatus({
@@ -548,6 +553,90 @@ export default function WhatsAppSender() {
               </>
             )}
           </button>
+
+          {sendResults && (
+            <div className="mt-6 p-4 bg-white rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  📊 Sending Results
+                </h3>
+                <button
+                  onClick={() => setSendResults(null)}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  Clear Results
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <span className="font-semibold text-green-800">
+                      Successful: {sendResults.success.length}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                  <div className="flex items-center gap-2">
+                    <XCircle className="w-5 h-5 text-red-600" />
+                    <span className="font-semibold text-red-800">
+                      Failed: {sendResults.failed.length}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {sendResults.success.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-green-800 mb-2">
+                      ✅ Successful Sends
+                    </h4>
+                    <div className="max-h-48 overflow-y-auto space-y-1">
+                      {sendResults.success.map((phone, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 p-2 bg-green-50 rounded text-sm"
+                        >
+                          <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
+                          <span className="font-mono text-green-700">
+                            +{phone}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {sendResults.failed.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-red-800 mb-2">
+                      ❌ Failed Sends
+                    </h4>
+                    <div className="max-h-48 overflow-y-auto space-y-1">
+                      {sendResults.failed.map((item, index) => (
+                        <div
+                          key={index}
+                          className="p-2 bg-red-50 rounded text-sm"
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <XCircle className="w-4 h-4 text-red-600 shrink-0" />
+                            <span className="font-mono text-red-700">
+                              +{item.phone}
+                            </span>
+                          </div>
+                          <p className="text-xs text-red-600 ml-6">
+                            Error: {item.error}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h3 className="text-sm font-semibold text-blue-800 mb-2">
