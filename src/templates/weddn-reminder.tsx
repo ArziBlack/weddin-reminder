@@ -20,6 +20,10 @@ export default function WhatsAppSender() {
     lastName: "Egbeyemi",
   });
 
+  const [selectedTemplate, setSelectedTemplate] = useState<
+    "wedding" | "hello_world" | "freeform"
+  >("wedding");
+  const [freeformMessage, setFreeformMessage] = useState("");
   const [phoneInput, setPhoneInput] = useState("");
   const [phoneList, setPhoneList] = useState<string[]>([]);
   const [status, setStatus] = useState({ type: "", message: "" });
@@ -46,6 +50,12 @@ export default function WhatsAppSender() {
   const formatPhoneNumber = (phone: any) => {
     let cleaned = phone.replace(/\D/g, "");
 
+    // If number already has a country code (length > 10), don't add another
+    if (cleaned.length > 11) {
+      return cleaned;
+    }
+
+    // Only add country code for Nigerian numbers without one
     if (cleaned.startsWith("0")) {
       cleaned = "234" + cleaned.substring(1);
     } else if (!cleaned.startsWith("234")) {
@@ -89,30 +99,55 @@ export default function WhatsAppSender() {
   const sendWhatsAppMessage = async (phoneNumber: any) => {
     const url = `https://graph.facebook.com/${CREDENTIALS.VERSION}/${CREDENTIALS.PHONE_NUMBER_ID}/messages`;
 
-    const payload = {
-      messaging_product: "whatsapp",
-      to: phoneNumber,
-      type: "template",
-      template: {
-        name: "weddn_invite_v2",
-        language: {
-          code: "en",
+    let payload;
+
+    if (selectedTemplate === "freeform") {
+      payload = {
+        messaging_product: "whatsapp",
+        to: phoneNumber,
+        type: "text",
+        text: {
+          body: freeformMessage,
         },
-        components: [
-          {
-            type: "body",
-            parameters: [
-              { type: "text", text: formData.coupleName },
-              { type: "text", text: formData.weddingDate },
-              { type: "text", text: formData.colors },
-              { type: "text", text: formData.websiteUrl },
-              { type: "text", text: formData.giftingDetails },
-              { type: "text", text: formData.lastName },
-            ],
+      };
+    } else if (selectedTemplate === "hello_world") {
+      payload = {
+        messaging_product: "whatsapp",
+        to: phoneNumber,
+        type: "template",
+        template: {
+          name: "hello_world",
+          language: {
+            code: "en_US",
           },
-        ],
-      },
-    };
+        },
+      };
+    } else {
+      payload = {
+        messaging_product: "whatsapp",
+        to: phoneNumber,
+        type: "template",
+        template: {
+          name: "weddn_invite_v2",
+          language: {
+            code: "en",
+          },
+          components: [
+            {
+              type: "body",
+              parameters: [
+                { type: "text", text: formData.coupleName },
+                { type: "text", text: formData.weddingDate },
+                { type: "text", text: formData.colors },
+                { type: "text", text: formData.websiteUrl },
+                { type: "text", text: formData.giftingDetails },
+                { type: "text", text: formData.lastName },
+              ],
+            },
+          ],
+        },
+      };
+    }
 
     const response = await fetch(url, {
       method: "POST",
@@ -229,6 +264,44 @@ export default function WhatsAppSender() {
             </div>
           </div>
 
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Template
+            </label>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSelectedTemplate("wedding")}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  selectedTemplate === "wedding"
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Wedding Invite
+              </button>
+              <button
+                onClick={() => setSelectedTemplate("hello_world")}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  selectedTemplate === "hello_world"
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Hello World (Test)
+              </button>
+              <button
+                onClick={() => setSelectedTemplate("freeform")}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  selectedTemplate === "freeform"
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Free-form Message
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Column - Template Settings */}
             <div className="space-y-4">
@@ -236,83 +309,111 @@ export default function WhatsAppSender() {
                 Template Settings
               </h2>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Couple Names
-                </label>
-                <input
-                  type="text"
-                  name="coupleName"
-                  value={formData.coupleName}
-                  onChange={(e) => handleInputChange(e.target)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                />
-              </div>
+              {selectedTemplate === "wedding" ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Couple Names
+                    </label>
+                    <input
+                      type="text"
+                      name="coupleName"
+                      value={formData.coupleName}
+                      onChange={(e) => handleInputChange(e.target)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Wedding Date
-                </label>
-                <input
-                  type="text"
-                  name="weddingDate"
-                  value={formData.weddingDate}
-                  onChange={(e) => handleInputChange(e.target)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Wedding Date
+                    </label>
+                    <input
+                      type="text"
+                      name="weddingDate"
+                      value={formData.weddingDate}
+                      onChange={(e) => handleInputChange(e.target)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Colors of the Day
-                </label>
-                <input
-                  type="text"
-                  name="colors"
-                  value={formData.colors}
-                  onChange={(e) => handleInputChange(e.target)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Colors of the Day
+                    </label>
+                    <input
+                      type="text"
+                      name="colors"
+                      value={formData.colors}
+                      onChange={(e) => handleInputChange(e.target)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Wedding Website URL
-                </label>
-                <input
-                  type="text"
-                  name="websiteUrl"
-                  value={formData.websiteUrl}
-                  onChange={(e) => handleInputChange(e.target)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Wedding Website URL
+                    </label>
+                    <input
+                      type="text"
+                      name="websiteUrl"
+                      value={formData.websiteUrl}
+                      onChange={(e) => handleInputChange(e.target)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Gifting Details
-                </label>
-                <input
-                  type="text"
-                  name="giftingDetails"
-                  value={formData.giftingDetails}
-                  onChange={(e) => handleInputChange(e.target)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Gifting Details
+                    </label>
+                    <input
+                      type="text"
+                      name="giftingDetails"
+                      value={formData.giftingDetails}
+                      onChange={(e) => handleInputChange(e.target)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange(e.target)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange(e.target)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    />
+                  </div>
+                </>
+              ) : selectedTemplate === "freeform" ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Your Message
+                  </label>
+                  <textarea
+                    value={freeformMessage}
+                    onChange={(e) => setFreeformMessage(e.target.value)}
+                    placeholder="Type your custom message here..."
+                    rows={10}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none resize-none"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Note: Free-form messages can only be sent to users who have
+                    messaged your business in the last 24 hours.
+                  </p>
+                </div>
+              ) : (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">
+                    The Hello World template is a simple test message with no
+                    customizable parameters.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Right Column - Phone Number List */}
@@ -452,8 +553,9 @@ export default function WhatsAppSender() {
             <h3 className="text-sm font-semibold text-blue-800 mb-2">
               📝 Message Preview
             </h3>
-            <p className="text-xs text-blue-700 whitespace-pre-line font-mono">
-              {`Message from ${formData.coupleName}
+            {selectedTemplate === "wedding" ? (
+              <p className="text-xs text-blue-700 whitespace-pre-line font-mono">
+                {`Message from ${formData.coupleName}
 
 💍✨ One Week to Go! ✨💍
 
@@ -469,7 +571,20 @@ If you would like to bless us with a monetary gift, our details are below (also 
 
 With love,
 The future ${formData.lastName}s`}
-            </p>
+              </p>
+            ) : selectedTemplate === "freeform" ? (
+              <p className="text-xs text-blue-700 whitespace-pre-line font-mono">
+                {freeformMessage || "Your custom message will appear here..."}
+              </p>
+            ) : (
+              <p className="text-xs text-blue-700 whitespace-pre-line font-mono">
+                {`Hello World
+
+Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us.
+
+WhatsApp Business Platform sample message`}
+              </p>
+            )}
           </div>
         </div>
       </div>
