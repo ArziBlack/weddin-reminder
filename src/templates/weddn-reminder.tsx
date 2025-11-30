@@ -21,9 +21,15 @@ export default function WhatsAppSender() {
   });
 
   const [selectedTemplate, setSelectedTemplate] = useState<
-    "wedding" | "hello_world" | "freeform"
+    "wedding" | "hello_world" | "freeform" | "appointment"
   >("wedding");
   const [freeformMessage, setFreeformMessage] = useState("");
+  const [appointmentData, setAppointmentData] = useState({
+    name: "John",
+    business: "Fashion Styles",
+    date: "December 31, 2025",
+    time: "1:00 PM",
+  });
   const [phoneInput, setPhoneInput] = useState("");
   const [phoneList, setPhoneList] = useState<string[]>([]);
   const [status, setStatus] = useState({ type: "", message: "" });
@@ -49,6 +55,11 @@ export default function WhatsAppSender() {
   const handleInputChange = (e: any) => {
     const { name, value } = e;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAppointmentChange = (e: any) => {
+    const { name, value } = e;
+    setAppointmentData((prev) => ({ ...prev, [name]: value }));
   };
 
   const formatPhoneNumber = (phone: any) => {
@@ -124,6 +135,29 @@ export default function WhatsAppSender() {
           language: {
             code: "en_US",
           },
+        },
+      };
+    } else if (selectedTemplate === "appointment") {
+      payload = {
+        messaging_product: "whatsapp",
+        to: phoneNumber,
+        type: "template",
+        template: {
+          name: "weddn_util",
+          language: {
+            code: "en_US",
+          },
+          components: [
+            {
+              type: "body",
+              parameters: [
+                { type: "text", text: appointmentData.name },
+                { type: "text", text: appointmentData.business },
+                { type: "text", text: appointmentData.date },
+                { type: "text", text: appointmentData.time },
+              ],
+            },
+          ],
         },
       };
     } else {
@@ -295,6 +329,16 @@ export default function WhatsAppSender() {
                 Hello World (Test)
               </button>
               <button
+                onClick={() => setSelectedTemplate("appointment")}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  selectedTemplate === "appointment"
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Appointment Reminder
+              </button>
+              <button
                 onClick={() => setSelectedTemplate("freeform")}
                 className={`px-4 py-2 rounded-lg transition-colors ${
                   selectedTemplate === "freeform"
@@ -390,6 +434,60 @@ export default function WhatsAppSender() {
                       name="lastName"
                       value={formData.lastName}
                       onChange={(e) => handleInputChange(e.target)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    />
+                  </div>
+                </>
+              ) : selectedTemplate === "appointment" ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Customer Name
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={appointmentData.name}
+                      onChange={(e) => handleAppointmentChange(e.target)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Business Name
+                    </label>
+                    <input
+                      type="text"
+                      name="business"
+                      value={appointmentData.business}
+                      onChange={(e) => handleAppointmentChange(e.target)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Appointment Date
+                    </label>
+                    <input
+                      type="text"
+                      name="date"
+                      value={appointmentData.date}
+                      onChange={(e) => handleAppointmentChange(e.target)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Appointment Time
+                    </label>
+                    <input
+                      type="text"
+                      name="time"
+                      value={appointmentData.time}
+                      onChange={(e) => handleAppointmentChange(e.target)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                     />
                   </div>
@@ -660,6 +758,18 @@ If you would like to bless us with a monetary gift, our details are below (also 
 
 With love,
 The future ${formData.lastName}s`}
+              </p>
+            ) : selectedTemplate === "appointment" ? (
+              <p className="text-xs text-blue-700 whitespace-pre-line font-mono">
+                {`You have an upcoming appointment
+
+Hello ${appointmentData.name},
+
+This is a reminder about your upcoming appointment with ${appointmentData.business} on ${appointmentData.date} at ${appointmentData.time}.
+
+We look forward to seeing you!
+
+[View details button: https://www.weddn.co/]`}
               </p>
             ) : selectedTemplate === "freeform" ? (
               <p className="text-xs text-blue-700 whitespace-pre-line font-mono">
